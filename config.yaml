@@ -1,4 +1,4 @@
-# List of ICA stores to scrape.
+# List of stores to scrape.
 # The keys 'name' and 'url_slug' map directly to the models.Store struct.
 stores:
 - name: "Maxi ICA Stormarknad Kalmar"

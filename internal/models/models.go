@@ -15,7 +15,7 @@ type Offer struct {
 
 	StoreName  string `json:"storeName" gorm:"type:varchar(100);uniqueIndex:idx_store_name_product_name"` // Primary key for Upsert logic
 	Name       string `json:"name" gorm:"type:varchar(255);uniqueIndex:idx_store_name_product_name"`      // Primary key for Upsert logic
-	ProductURL string `json:"productURL" gorm:"type:text;uniqueIndex:idx_store_name_product_name"`
+	ProductURL string `json:"productURL" gorm:"type:varchar(2048);uniqueIndex:idx_store_name_product_name"`
 	Type       string `json:"type" gorm:"type:varchar(50)"`
 
 	// Use pointers for omitempty/nullable fields in the DB if they can be nil
