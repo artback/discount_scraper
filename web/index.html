@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erbjudanden & Kampanjer 🛒</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300,400,500,700&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS-kod med Material Design-inspiration */
+        :root {
+            --primary-color: #3f51b5; /* Indigo */
+            --primary-dark: #303f9f;
+            --accent-color: #ff9800; /* Orange Accent (for multibuy) */
+            --background-color: #f5f5f5;
+            --surface-color: #ffffff;
+            --text-color: #212121;
+            --shadow-z1: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-z2: 0 4px 8px rgba(0, 0, 0, 0.15);
+            --border-radius: 4px;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 24px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-dark);
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        /* --- Kontroller/Sökfält --- */
+        .controls {
+            margin-bottom: 24px;
+        }
+
+        #searchInput {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-z1);
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: box-shadow 0.3s, border 0.3s;
+        }
+
+        #searchInput:focus {
+            box-shadow: 0 4px 12px rgba(63, 81, 181, 0.2);
+            outline: 2px solid var(--primary-color);
+        }
+
+        /* Loading Indicator */
+        #loading {
+            text-align: center;
+            padding: 40px;
+            color: #757575;
+            font-size: 1.2em;
+        }
+
+        /* --- Tabell och Responsivitet --- */
+        .table-wrapper {
+            overflow-x: auto;
+            background-color: var(--surface-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-z2);
+        }
+
+        #promotionsTable {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        #promotionsTable th, #promotionsTable td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eeeeee;
+        }
+
+        #promotionsTable thead th {
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        #promotionsTable thead th:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #promotionsTable tbody tr:hover {
+            background-color: #f9f9f9;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        /* --- UI Elementer --- */
+        .type-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .type-badge.multibuy {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        .type-badge.single {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .sale-info {
+            font-weight: 500;
+            color: #4CAF50;
+        }
+
+        .discount-percent {
+            font-weight: bold;
+            color: #E91E63;
+        }
+
+        .deal-link {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px 16px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.2s, box-shadow 0.2s;
+        }
+
+        .deal-link:hover {
+            background-color: var(--primary-dark);
+            box-shadow: var(--shadow-z1);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #757575;
+            font-size: 0.9em;
+        }
+
+        @media screen and (max-width: 768px) {
+            body { padding: 12px; }
+            #promotionsTable th, #promotionsTable td {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Butikserbjudanden & Kampanjer </h1>
+
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Sök produkt, butik eller typ..." onkeyup="filterTable()">
+    </div>
+
+    <div class="table-wrapper">
+        <table id="promotionsTable">
+            <thead>
+            <tr>
+                <th onclick="sortTable(0)">Butik ↕</th>
+                <th onclick="sortTable(1)">Produktnamn ↕</th>
+                <th onclick="sortTable(2)">Typ ↕</th>
+                <th onclick="sortTable(3)">Ord. Pris (kr) ↕</th>
+                <th onclick="sortTable(4)">Kampanjinfo</th>
+                <th onclick="sortTable(5)">Rabatt (%) ↕</th>
+                <th>Länk</th>
+            </tr>
+            </thead>
+            <tbody id="tableBody">
+            <tr><td colspan="7" id="loading">Laddar data från servern...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p class="footer">Klicka på en kolumnrubrik med '↕' för att sortera!</p>
+</div>
+
+<script>
+    // JavaScript-logik
+    const tableBody = document.getElementById('tableBody');
+    let sortDirection = {};
+    let currentProductData = []; // Lagrar den hämtade datan
+
+    // --- 1. Hämta data från Go-servern ---
+    async function loadDataAndRender() {
+        try {
+            // Hämta data från Go-serverns endpoint
+            const response = await fetch('/api/offers');
+
+            if (!response.ok) {
+                throw new Error(`Serverfel: ${response.status} ${response.statusText}`);
+            }
+
+            const fetchedData = await response.json();
+
+            currentProductData = fetchedData;
+            renderTable(currentProductData);
+
+        } catch (error) {
+            console.error("Fel vid inläsning av data:", error);
+            tableBody.innerHTML = `<tr><td colspan="7" style="color: #E91E63; text-align: center;">Kunde inte ladda data. Se konsolen för felmeddelande.</td></tr>`;
+        }
+    }
+
+    // --- 2. Återgivningsfunktion (Render) ---
+    function renderTable(data) {
+        tableBody.innerHTML = '';
+
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="7" style="text-align: center;">Hittade inga erbjudanden.</td></tr>`;
+            return;
+        }
+
+        data.forEach(item => {
+            const row = tableBody.insertRow();
+
+            let saleInfoText = '';
+            let typeText = item.type;
+            let salePriceValue = '';
+
+            if (item.type === 'multibuy') {
+                saleInfoText = `${item.saleQuantity} för ${item.salePriceTotal.toFixed(2)} kr`;
+                typeText = 'FLERPACK';
+                salePriceValue = item.salePriceTotal;
+            } else {
+                saleInfoText = `${item.salePrice ? item.salePrice.toFixed(2) + ' kr' : 'Ej angivet'}`;
+                typeText = 'ENKEL';
+                salePriceValue = item.salePrice;
+            }
+
+            // Infoga celler med UI-element
+            row.insertCell().textContent = item.storeName;
+            row.insertCell().textContent = item.name;
+
+            // Typ-bricka
+            const typeCell = row.insertCell();
+            typeCell.innerHTML = `<span class="type-badge ${item.type}">${typeText}</span>`;
+
+            // Ord. Pris
+            row.insertCell().textContent = `${item.originalPrice.toFixed(2)}`;
+
+            // Kampanjinfo
+            const saleCell = row.insertCell();
+            saleCell.innerHTML = `<span class="sale-info">${saleInfoText}</span>`;
+
+            // Rabattprocent
+            const discountCell = row.insertCell();
+            discountCell.innerHTML = `<span class="discount-percent">${item.discountPercentage.toFixed(2)}%</span>`;
+
+            // Länk-knapp
+            const linkCell = row.insertCell();
+            linkCell.innerHTML = `<a href="${item.productURL}" target="_blank" class="deal-link" title="Gå till erbjudande">Se Erbjudande</a>`;
+        });
+    }
+
+    // --- 3. Sök/Filter-funktion ---
+    window.filterTable = function() {
+        const input = document.getElementById('searchInput');
+        const filter = input.value.toLowerCase();
+        const rows = tableBody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            let cells = rows[i].getElementsByTagName('td');
+            let rowText = '';
+
+            if (cells.length > 3) {
+                // Filtrera mot Butik, Produkt och Typ
+                rowText = (cells[0].textContent + ' ' + cells[1].textContent + ' ' + cells[2].textContent).toLowerCase();
+            }
+
+            if (rowText.includes(filter)) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    }
+
+    // --- 4. Sorteringsfunktion ---
+    window.sortTable = function(columnIndex) {
+
+        if (currentProductData.length === 0) return;
+
+        const currentDirection = sortDirection[columnIndex];
+        const direction = currentDirection === 'asc' ? 'desc' : 'asc';
+        sortDirection = {};
+        sortDirection[columnIndex] = direction;
+
+        // Sortera den faktiska datan (inte DOM-raderna)
+        currentProductData.sort((a, b) => {
+            let aVal, bVal;
+            let comparison = 0;
+
+            // Hantering av kolumnindex för sortering
+            switch (columnIndex) {
+                case 0: // Butik (Sträng)
+                case 1: // Produktnamn (Sträng)
+                    aVal = a.storeName;
+                    bVal = b.storeName;
+                    if (columnIndex === 1) { aVal = a.name; bVal = b.name; }
+                    comparison = aVal.localeCompare(bVal, 'sv', { numeric: true, sensitivity: 'base' });
+                    break;
+                case 2: // Typ (Sträng)
+                    aVal = a.type;
+                    bVal = b.type;
+                    comparison = aVal.localeCompare(bVal);
+                    break;
+                case 3: // Ord. Pris (Numeriskt)
+                    aVal = a.originalPrice;
+                    bVal = b.originalPrice;
+                    comparison = aVal - bVal;
+                    break;
+                case 5: // Rabatt (%) (Numeriskt)
+                    aVal = a.discountPercentage;
+                    bVal = b.discountPercentage;
+                    comparison = aVal - bVal;
+                    break;
+                default:
+                    // Ingen sortering för Kampanjinfo eller Länk
+                    return 0;
+            }
+
+            return direction === 'asc' ? comparison : -comparison;
+        });
+
+        // Återge den sorterade arrayen till DOM
+        renderTable(currentProductData);
+    }
+
+    // Starta laddningen när sidan har laddats
+    document.addEventListener('DOMContentLoaded', loadDataAndRender);
+</script>
+</body>
+</html>

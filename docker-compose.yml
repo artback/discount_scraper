@@ -1,0 +1,27 @@
+services:
+  db:
+    # Use the official Postgres image
+    image: postgres:16-alpine
+    container_name: ica_offers_postgres
+
+    # Map the default PostgreSQL port (5432)
+    ports:
+      - "5432:5432"
+
+    # Define environment variables for the connection
+    environment:
+      # These must match the credentials in your Go application's DB_CONN_STRING
+      POSTGRES_USER: youruser
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: offers_db
+
+    # Persist the database data to a volume on your host machine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # Restart the container if it stops for any reason
+    restart: always
+
+# Define the volume where the data will be stored
+volumes:
+  postgres_data:
