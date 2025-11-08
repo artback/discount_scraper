@@ -1,0 +1,13 @@
+# List of stores to scrape.
+# The keys 'name' and 'url_slug' map directly to the models.Store struct.
+stores:
+  - name: "Maxi ICA Stormarknad Kalmar"
+    url_slug: "maxi-ica-stormarknad-kalmar-1004348"
+  - name: "ICA Supermarket Smedby"
+    url_slug: "ica-supermarket-smedby-kalmar-1003977"
+
+db_host: "localhost"
+db_port: "5432"
+db_user: "youruser"
+db_password: "yourpassword"
+db_name: "offers_db"
