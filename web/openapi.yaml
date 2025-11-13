@@ -1,0 +1,205 @@
+basePath: /
+consumes:
+    - application/json
+definitions:
+    DeletedAt:
+        $ref: '#/definitions/NullTime'
+    Model:
+        description: |-
+            type User struct {
+            gorm.Model
+            }
+        properties:
+            CreatedAt:
+                format: date-time
+                type: string
+            DeletedAt:
+                $ref: '#/definitions/DeletedAt'
+            ID:
+                format: uint64
+                type: integer
+            UpdatedAt:
+                format: date-time
+                type: string
+        title: |-
+            Model a basic GoLang struct which includes the following fields: ID, CreatedAt, UpdatedAt, DeletedAt
+            It may be embedded into your model or you may build your own model without it
+        type: object
+        x-go-package: gorm.io/gorm
+    NullTime:
+        description: |-
+            NullTime implements the [Scanner] interface so
+            it can be used as a scan destination, similar to [NullString].
+        properties:
+            Time:
+                format: date-time
+                type: string
+            Valid:
+                type: boolean
+        title: NullTime represents a [time.Time] that may be null.
+        type: object
+        x-go-package: database/sql
+    Offer:
+        properties:
+            CreatedAt:
+                format: date-time
+                type: string
+            DeletedAt:
+                $ref: '#/definitions/DeletedAt'
+            ID:
+                format: uint64
+                type: integer
+            UpdatedAt:
+                format: date-time
+                type: string
+            discount:
+                description: the discount of the product
+                format: int64
+                type: integer
+                x-go-name: Discount
+            discountPercentage:
+                description: the discount percentage of the product
+                format: double
+                type: number
+                x-go-name: DiscountPercentage
+            name:
+                description: the name of the product
+                type: string
+                x-go-name: Name
+            originalPrice:
+                description: |-
+                    Use pointers for omitempty/nullable fields in the DB if they can be nil
+                    the original price of the product
+                format: double
+                type: number
+                x-go-name: OriginalPrice
+            productURL:
+                description: the url of the product
+                type: string
+                x-go-name: ProductURL
+            salePrice:
+                description: the sale price of the product
+                format: double
+                type: number
+                x-go-name: SalePrice
+            salePriceTotal:
+                description: the total price of the sale
+                format: double
+                type: number
+                x-go-name: SalePriceTotal
+            saleQuantity:
+                description: the quantity of the product for the sale price
+                format: int64
+                type: integer
+                x-go-name: SaleQuantity
+            storeName:
+                description: the name of the store
+                type: string
+                x-go-name: StoreName
+            type:
+                description: the type of the offer
+                type: string
+                x-go-name: Type
+        required:
+            - storeName
+            - name
+            - productURL
+            - type
+            - salePrice
+        title: Offer represents an offer for a product.
+        type: object
+        x-go-package: grocery_scraper/internal/models
+    OfferResponse:
+        properties:
+            discount:
+                description: the discount of the product
+                format: int64
+                type: integer
+                x-go-name: Discount
+            discountPercentage:
+                description: the discount percentage of the product
+                format: double
+                type: number
+                x-go-name: DiscountPercentage
+            id:
+                description: the id of the offer
+                format: uint64
+                type: integer
+                x-go-name: ID
+            name:
+                description: the name of the product
+                type: string
+                x-go-name: Name
+            originalPrice:
+                description: |-
+                    Use pointers for omitempty/nullable fields in the DB if they can be nil
+                    the original price of the product
+                format: double
+                type: number
+                x-go-name: OriginalPrice
+            productURL:
+                description: the url of the product
+                type: string
+                x-go-name: ProductURL
+            salePrice:
+                description: the sale price of the product
+                format: double
+                type: number
+                x-go-name: SalePrice
+            salePriceTotal:
+                description: the total price of the sale
+                format: double
+                type: number
+                x-go-name: SalePriceTotal
+            saleQuantity:
+                description: the quantity of the product for the sale price
+                format: int64
+                type: integer
+                x-go-name: SaleQuantity
+            storeName:
+                description: the name of the store
+                type: string
+                x-go-name: StoreName
+            type:
+                description: the type of the offer
+                type: string
+                x-go-name: Type
+        required:
+            - id
+            - storeName
+            - name
+            - productURL
+            - type
+            - salePrice
+        title: OfferResponse represents an offer for a product for the swagger documentation.
+        type: object
+        x-go-package: grocery_scraper/internal/models
+host: localhost:8080
+info:
+    license:
+        name: MIT
+        url: http://opensource.org/licenses/MIT
+    termsOfService: there are no TOS at this moment, use at your own risk we take no responsibility
+    title: 'classification: an API for retrieving scraped data.'
+    version: 1.0.0
+paths:
+    /api/offers:
+        get:
+            operationId: listOffers
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: An array of offers
+                    schema:
+                        items:
+                            $ref: '#/definitions/OfferResponse'
+                        type: array
+            summary: Returns a list of offers.
+            tags:
+                - offers
+produces:
+    - application/json
+schemes:
+    - http
+swagger: "2.0"

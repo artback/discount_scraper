@@ -106,6 +106,15 @@ The API has the following endpoints:
 - `GET /`: Serves the main page.
 - `GET /api/offers`: Serves the scraped offers as JSON.
 
+The API is documented using the OpenAPI specification. You can find the documentation in the [openapi.yaml](web/openapi.yaml) file.
+
+To generate the OpenAPI documentation, run the following command:
+
+```bash
+go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+swagger generate spec -o ./web/openapi.yaml --scan-models
+```
+
 ## Configuration
 
 -   **Database connection**:

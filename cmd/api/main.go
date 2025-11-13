@@ -1,3 +1,22 @@
+// Package main classification: an API for retrieving scraped data.
+//
+// Terms Of Service:
+//
+// there are no TOS at this moment, use at your own risk we take no responsibility
+//
+//	Schemes: http
+//	Host: localhost:8080
+//	BasePath: /
+//	Version: 1.0.0
+//	License: MIT http://opensource.org/licenses/MIT
+//
+//	Consumes:
+//	- application/json
+//
+//	Produces:
+//	- application/json
+//
+// swagger:meta
 package main
 
 import (
@@ -47,7 +66,22 @@ type OfferApi struct {
 	offerRepository repository.OfferRepository
 }
 
-// offersHandler fetches data directly from the database repository and serves it as JSON.
+// swagger:operation GET /api/offers offers listOffers
+//
+// Returns a list of offers.
+//
+// ---
+// tags:
+// - offers
+// produces:
+// - application/json
+// responses:
+//   '200':
+//     description: An array of offers
+//     schema:
+//       type: array
+//       items:
+//         $ref: "#/definitions/OfferResponse"
 func (o OfferApi) offersHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
