@@ -46,17 +46,9 @@ func (r *PostgresOfferRepository) InsertOffers(ctx context.Context, offers []mod
 	result := r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		// Target the unique index we defined on (StoreName, Name)
 		Columns: []clause.Column{{Name: "store_name"}, {Name: "name"}, {Name: "product_url"}},
-		// If a conflict occurs, update all columns (except the primary key and the conflict targets)
-		DoUpdates: clause.AssignmentColumns([]string{
-			"type",
-			"original_price",
-			"sale_price",
-			"sale_quantity",
-			"sale_price_total",
-			"discount",
-			"discount_percentage",
-			"updated_at", // GORM handles updating this timestamp automatically
-		}),
+		// If a conflict occurs, update all columns.
+		// We use pq.StringArray in the model which handles the array serialization correctly.
+		UpdateAll: true,
 	}).CreateInBatches(&offers, 100) // Insert in batches of 100
 
 	if result.Error != nil {
