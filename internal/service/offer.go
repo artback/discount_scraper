@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const ICA_BASE_URL = "https://www.ica.se/erbjudanden"
@@ -132,6 +133,31 @@ func calculateDiscount(offer models.Offer) float64 {
 	return roundedDiscount
 }
 
+// getValidityPeriod returns the start (Monday) and end (Sunday) of the current week.
+// It assumes the current time is within the validity period.
+func getValidityPeriod() (time.Time, time.Time) {
+	now := time.Now()
+	// Calculate days to subtract to get to Monday (0 for Mon, 1 for Tue, ..., 6 for Sun)
+	// weekday: Sun=0, Mon=1, ... Sat=6
+	// We want Mon=0, Tue=1, ... Sun=6
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7
+	}
+	daysToSubtract := weekday - 1
+
+	start := now.AddDate(0, 0, -daysToSubtract)
+	// Set to beginning of the day
+	start = time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, start.Location())
+
+	// End is Sunday (start + 6 days)
+	end := start.AddDate(0, 0, 6)
+	// Set to end of the day
+	end = time.Date(end.Year(), end.Month(), end.Day(), 23, 59, 59, 999999999, end.Location())
+
+	return start, end
+}
+
 // GetStoreOffers orchestrates the fetching, parsing, transformation, and calculation steps.
 func (s *offerService) GetStoreOffers(ctx context.Context, store models.Store) ([]models.Offer, error) {
 	// 1. Fetch HTML content (Repository responsibility)
@@ -156,6 +182,8 @@ func (s *offerService) GetStoreOffers(ctx context.Context, store models.Store) (
 	var productNames []string
 	var tempOffers []models.Offer
 
+	validFrom, validTo := getValidityPeriod()
+
 	for _, rawDeal := range rawDeals {
 		// Extract Original Price
 		originalPrice := 0.0
@@ -168,6 +196,8 @@ func (s *offerService) GetStoreOffers(ctx context.Context, store models.Store) (
 			Name:          rawDeal.Name,
 			OriginalPrice: originalPrice,
 			Type:          "unknown",
+			ValidFrom:     validFrom,
+			ValidTo:       validTo,
 		}
 		// Construct the final, usable URL
 		deal.ProductURL = fmt.Sprintf("%s/%s?id=%s&action=details", ICA_BASE_URL, store.URLSlug, rawDeal.PromotionID)

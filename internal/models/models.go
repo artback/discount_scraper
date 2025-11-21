@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -122,4 +123,8 @@ type Offer struct {
 
 	// Categories for the product
 	Categories StringArray `json:"categories" gorm:"type:text[]"`
+
+	// Validity period of the offer
+	ValidFrom time.Time `json:"validFrom" gorm:"index"`
+	ValidTo   time.Time `json:"validTo" gorm:"index"`
 }

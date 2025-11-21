@@ -19,6 +19,15 @@ ARG app_path
 
 WORKDIR /app
 
+# Install Chromium and dependencies for headless execution
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
 COPY --from=builder /app/application /app/application
 
 CMD [ "/app/application" ]

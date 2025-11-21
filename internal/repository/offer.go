@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"grocery_scraper/internal/models"
+	"time"
 
 	"gorm.io/gorm"        // GORM library
 	"gorm.io/gorm/clause" // Required for Upsert logic (OnConflict)
@@ -70,8 +71,9 @@ func (r *PostgresOfferRepository) CountOffers(ctx context.Context) (int, error) 
 }
 func (r *PostgresOfferRepository) GetAllOffers(ctx context.Context) ([]models.Offer, error) {
 	var offers []models.Offer
-	// Fetches all records from the 'offers' table
-	result := r.db.WithContext(ctx).Find(&offers)
+	now := time.Now()
+	// Fetches all records from the 'offers' table where valid_from <= now <= valid_to
+	result := r.db.WithContext(ctx).Where("valid_from <= ? AND valid_to >= ?", now, now).Find(&offers)
 
 	if result.Error != nil {
 		return nil, fmt.Errorf("failed to retrieve offers: %w", result.Error)
