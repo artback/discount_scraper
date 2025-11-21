@@ -24,15 +24,17 @@ type OfferService interface {
 // It now depends on the Repository (for low-level data access/fetching)
 // and the OfferExtractor (for raw HTML parsing).
 type offerService struct {
-	Repo   repository.ICARepository
-	Parser parser.OfferParser // <-- Updated dependency name and type
+	Repo        repository.ICARepository
+	Parser      parser.OfferParser
+	Categorizer Categorizer // <-- New dependency
 }
 
-// NewOfferService creates a new service instance with both dependencies.
-func NewOfferService(repo repository.ICARepository, extractor parser.OfferParser) OfferService {
+// NewOfferService creates a new service instance with dependencies.
+func NewOfferService(repo repository.ICARepository, extractor parser.OfferParser, categorizer Categorizer) OfferService {
 	return &offerService{
-		Repo:   repo,
-		Parser: extractor,
+		Repo:        repo,
+		Parser:      extractor,
+		Categorizer: categorizer,
 	}
 }
 
@@ -105,13 +107,14 @@ func calculateDiscount(offer models.Offer) float64 {
 	var originalTotal float64
 	var saleTotal float64
 
-	if offer.Type == "single" {
+	switch offer.Type {
+	case "single":
 		originalTotal = offer.OriginalPrice
 		saleTotal = offer.SalePrice
-	} else if offer.Type == "multibuy" {
+	case "multibuy":
 		originalTotal = offer.OriginalPrice * float64(offer.SaleQuantity)
 		saleTotal = offer.SalePriceTotal
-	} else {
+	default:
 		return 0
 	}
 
@@ -149,8 +152,10 @@ func (s *offerService) GetStoreOffers(ctx context.Context, store models.Store) (
 		return nil, fmt.Errorf("failed to extract raw offers for %s: %w", store.Name, err)
 	}
 
-	var offers []models.Offer
 	// 3. Transform Raw Data into structured Offers (Service Business Logic)
+	var productNames []string
+	var tempOffers []models.Offer
+
 	for _, rawDeal := range rawDeals {
 		// Extract Original Price
 		originalPrice := 0.0
@@ -180,11 +185,34 @@ func (s *offerService) GetStoreOffers(ctx context.Context, store models.Store) (
 			deal.SalePrice = parsePrice(singlePriceMatch[1])
 		}
 
+		if originalPrice == 0 {
+			deal.OriginalPrice = deal.SalePrice
+		}
+
 		// Calculate Final Discount Percentage
 		deal.DiscountPercentage = calculateDiscount(deal)
 
-		offers = append(offers, deal)
+		tempOffers = append(tempOffers, deal)
+		productNames = append(productNames, deal.Name)
 	}
 
-	return offers, nil
+	// 4. Categorize Products (AI Enhancement)
+	// Only categorize if we have a categorizer and products
+	if s.Categorizer != nil && len(productNames) > 0 {
+		categoriesMap, err := s.Categorizer.Categorize(ctx, productNames)
+		if err != nil {
+			// Log error but don't fail the whole scraping process?
+			// For now, let's just log it.
+			fmt.Printf("Warning: Failed to categorize products for %s: %v\n", store.Name, err)
+		} else {
+			// Assign categories back to offers
+			for i := range tempOffers {
+				if cats, ok := categoriesMap[tempOffers[i].Name]; ok {
+					tempOffers[i].Categories = cats
+				}
+			}
+		}
+	}
+
+	return tempOffers, nil
 }
