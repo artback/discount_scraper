@@ -3,17 +3,19 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
 	"grocery_scraper/internal/models"
 	"log"
+
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/spf13/viper"
 )
 
 // Config holds the application configuration parameters.
 type Config struct {
-	DBConn string
-	Stores []models.Store
+	DBConn   string
+	Stores   []models.Store
+	AIAPIKey string
 }
 
 // Global constants for configuration keys
@@ -24,6 +26,7 @@ const (
 	DBPasswordKey = "DB_PASSWORD"
 	DBNameKey     = "DB_NAME"
 	StoresKey     = "stores" // Key for the list of stores in config.yaml
+	AIAPIKey      = "AI_API_KEY"
 )
 
 // Init initializes Viper, sets defaults, and constructs the DSN.
@@ -59,8 +62,9 @@ func Init() *Config {
 	viper.WatchConfig()
 
 	return &Config{
-		DBConn: dsn,
-		Stores: stores,
+		DBConn:   dsn,
+		Stores:   stores,
+		AIAPIKey: viper.GetString(AIAPIKey),
 	}
 }
 

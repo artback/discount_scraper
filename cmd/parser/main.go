@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"golang.org/x/sync/errgroup"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"grocery_scraper/internal/config"
 	"grocery_scraper/internal/parser"
 	"grocery_scraper/internal/repository"
 	"grocery_scraper/internal/service"
 	"log"
+
+	"golang.org/x/sync/errgroup"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 // --- Main Application Logic ---
@@ -44,8 +45,25 @@ func main() {
 	}
 	log.Println("Database structure verified/migrated successfully.")
 
+	// Initialize AI Categorizer
+	var categorizer service.Categorizer
+	if appConfig.AIAPIKey != "" {
+		var err error
+		categorizer, err = service.NewAICategorizer(ctx, appConfig.AIAPIKey)
+		if err != nil {
+			log.Printf("Warning: Failed to initialize AI Categorizer: %v. Categorization will be skipped.", err)
+		} else {
+			log.Println("AI Categorizer initialized successfully.")
+			if aiCat, ok := categorizer.(*service.AICategorizer); ok {
+				defer aiCat.Close()
+			}
+		}
+	} else {
+		log.Println("No AI API key provided. Categorization will be skipped.")
+	}
+
 	par := parser.NewOfferParser()
-	offerService := service.NewOfferService(icaRepo, par)
+	offerService := service.NewOfferService(icaRepo, par, categorizer)
 
 	// Initialize the errgroup.Group
 	g, gCtx := errgroup.WithContext(ctx)
@@ -56,7 +74,7 @@ func main() {
 			log.Printf("Starting scrape for: %s", store.Name)
 
 			// Use the context from the errgroup for scrape calls
-			offers, err := offerService.GetStoreOffers(gCtx, store)
+			offers, err := offerService.GetStoreOffers(ctx, store)
 			if err != nil {
 				return fmt.Errorf("error scraping %s: %w", store.Name, err)
 			}
